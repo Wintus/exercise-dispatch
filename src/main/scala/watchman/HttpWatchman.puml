@@ -1,0 +1,78 @@
+@startuml
+title <size: 18> HTTP Watchman </size>
+
+package watchman {
+
+class Watchman {
+- addresses: Vector[String]
++ register(AddressBook): Unit
++ check(): Vector[(Address, Source)]
+}
+
+class AddressBook {
+- nonSecures: Seq[String]
+- addresses: Set[String]
++ apply(): Vector[String]
++ validate(): Boolean
++ add(String): Unit
++ remove(String): Unit
+}
+
+class Retriever <<(O,Yellow) object>> {
++ apply(String): Vector[Future[(Address, Source)]]
++ retrieve(Address): Vector[Future[(Address, Source)]]
+}
+
+class Address {
++ url: String
+}
+
+class Source {
++ html: String
+}
+
+class Reporter {
+- email: String
+- reportingEmail: String
++ apply(Throwable): Unit
++ report(Throwable): Unit
+}
+
+class Main {
++ watchman: Watchman
++ results: Vector[(Address, Source)]
+}
+note right #green : Entry point
+
+Watchman -> AddressBook
+Watchman "*" --> "1" Retriever : <<delegate>>
+Retriever "1" --> "0..*" Address
+Retriever "1" --> "0..*" Source
+Watchman "*" --> "0..*" Reporter : <<delegate>>
+Reporter "*" ---> "1" mail.send
+note on link #red : send a new Mail about Error
+Main "1" --> "*" Watchman
+
+}
+
+
+package "mail" {
+note "package object" as FN
+
+class send <<(O, Yellow) object>> {
++ a(Mail): Unit
+}
+
+class Mail {
++ from
++ to
++ subject
++ message
++
++
+}
+
+send "1" -> "0..*" Mail
+}
+
+@enduml
